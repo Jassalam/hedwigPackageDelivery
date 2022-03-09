@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="ASAPHub">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../SharkMessenger/libs/ASAPHub.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../SharkMessenger/libs/ASAPJava.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../SharkMessenger/libs/SharkContactInformation.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../SharkMessenger/libs/SharkPeer.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../SharkMessenger/libs/SharkPKI.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
