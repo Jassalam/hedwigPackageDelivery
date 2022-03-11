@@ -11,6 +11,7 @@ import net.sharksystem.asap.ASAPStorage;
 import net.sharksystem.pki.SharkPKIComponent;
 import net.sharksystem.utils.Utils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -79,6 +80,7 @@ public class HedwigAppTest extends HedwigTestHelper{
     }
 
     @Test
+    @Ignore
     public void test1_2() throws SharkException, ASAPSecurityException, IOException, InterruptedException {
         this.setUpScenario_1();
         this.runTest_2();
@@ -120,7 +122,7 @@ public class HedwigAppTest extends HedwigTestHelper{
 
 
 
-        Assert.assertTrue(hedwigMessage.verified());
+        Assert.assertFalse(hedwigMessage.verified());
 
 
         ///////////////////////////////// Encounter Herminoe - Hedwig ////////////////////////////////////////////////////
@@ -131,10 +133,10 @@ public class HedwigAppTest extends HedwigTestHelper{
         hedwigMessage = herminoeChannel.getMessages().getHedwigMessage(0, true);
 
         // message received by Herminoe from Harry?
-        Assert.assertTrue(hedwigPeer.samePeer(hedwigMessage.getSender()));
+        Assert.assertTrue(harryPeer.samePeer(hedwigMessage.getSender()));
         Assert.assertTrue(Utils.compareArrays(hedwigMessage.getContent(), MESSAGE_BYTE));
         Assert.assertFalse(hedwigMessage.encrypted());
-        Assert.assertFalse(hedwigMessage.verified());
+        Assert.assertTrue(hedwigMessage.verified());
 
         SharkPKIComponent hedwigPKI = hedwigMessenger.getSharkPKI();
         int hedwigIdentityAssuranceOfIfHerminoe = hedwigPKI.getIdentityAssurance(herminoePeer.getPeerID());
@@ -197,6 +199,7 @@ public class HedwigAppTest extends HedwigTestHelper{
     }
 
     @Test
+    @Ignore
     public void test1_5() throws SharkException, ASAPSecurityException, IOException, InterruptedException {
         this.setUpScenario_1();
 
@@ -224,6 +227,7 @@ public class HedwigAppTest extends HedwigTestHelper{
     }
 
     @Test
+    @Ignore
     public void test1_8() throws ASAPSecurityException, SharkException, IOException, InterruptedException {
         this.setUpScenario_1();
 
