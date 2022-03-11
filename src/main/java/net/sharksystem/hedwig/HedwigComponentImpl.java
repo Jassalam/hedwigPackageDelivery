@@ -4,6 +4,8 @@ import net.sharksystem.SharkException;
 import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.SharkUnknownBehaviourException;
 import net.sharksystem.asap.*;
+import net.sharksystem.pki.CredentialMessage;
+import net.sharksystem.pki.SharkCredentialReceivedListener;
 import net.sharksystem.pki.SharkPKIComponent;
 import net.sharksystem.utils.Log;
 
@@ -13,12 +15,14 @@ import java.util.*;
 
 import static net.sharksystem.hedwig.AppConstants.*;
 
-public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager implements HedwigComponent, ASAPMessageReceivedListener, ASAPEnvironmentChangesListener {
+public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager implements HedwigComponent,
+    ASAPMessageReceivedListener, ASAPEnvironmentChangesListener, SharkCredentialReceivedListener {
 
     private final SharkPKIComponent sharkPKIComponent;
     private ASAPPeer asapPeer;
     public Set<CharSequence> onlinePeers = new HashSet<>();
     public Set<CharSequence> allPeers = new HashSet<>();
+    public Map<String, CredentialMessage> credentialMessages =  new HashMap<>();
     /*
      *Package Information filled only when its a Hedwig
      *
@@ -225,13 +229,6 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         Log.writeLog(this, "Simulating Bluetooth connection started");
     }
 
-    @Override
-    public void sendMessageHedwigRegistrationIfOwnerAHedwig(CharSequence ownerId) throws IOException, HedwigMessangerException {
-        if (ownerId.toString().startsWith(HEDWIG_PREFIX)) {
-            Log.writeLog(this, "sending Hedwig Registration");
-            this.sendHedwigMessage(String.valueOf(ownerId).getBytes(StandardCharsets.UTF_8), URI_HEDWIG_HEDWIG_REGISTRATION, false, false);
-        }
-    }
 
     @Override
     public void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException  {
@@ -243,11 +240,6 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
     public void sendUserLocation(String longitude, String latitude) throws IOException, HedwigMessangerException {
         Log.writeLog(this, "Sharing User Location");
         this.sendHedwigMessage(String.valueOf(longitude + ", " + latitude).getBytes(StandardCharsets.UTF_8), URI_USER_GPS, false, false);
-    }
-
-    @Override
-    public void callHedwig(CharSequence hedwigID, String longitude, String latitude) throws IOException, HedwigMessangerException {
-        this.sendHedwigMessage((hedwigID + ":" + longitude + ":" + latitude).getBytes(StandardCharsets.UTF_8), URI_CALL_HEDWIG, false, false);
     }
 
     @Override
@@ -272,113 +264,49 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         CharSequence uri = asapMessages.getURI();
         if (uri.toString().equals(URI_MAKE_OFFER)) {
             Log.writeLog(this, "Checking Message in Offer Channel");
-            asapMessages.getMessages().forEachRemaining(message -> {
-                String[] peerIdAndMeesage = message.toString().split(":");
-                if (HedwigApp.OWNER.equals(peerIdAndMeesage[0])) {
-                    List<String> messages = HedwigComponent.messages.get(senderE2E);
-                    if (messages != null && !messages.isEmpty()) {
-                        messages.add(peerIdAndMeesage[1]);
-                        HedwigComponent.messages.put(senderE2E, messages);
-                    } else {
-                        HedwigComponent.messages.put(senderE2E, Collections.singletonList(peerIdAndMeesage[1]));
-                    }
-                }
 
-            });
+            parseMessageAndAddToUsersMessageList(asapMessages, asapHops);
         }
         if (uri.toString().equals(URI_USER_GPS)) {
             //add GPS and User to Peerslist in App
             Log.writeLog(this, "Got GPS Message");
-            asapMessages.getMessages().forEachRemaining(message ->
-            {
-                String[] split = message.toString().split(",");
-                Optional<User> userPresent = users.stream()
-                    .filter(user -> user.peerId.equals(senderE2E))
-                    .findFirst();
-                if (userPresent.isPresent()) {
-                    users.remove(userPresent); //update user location anyway
-                }
-                users.add(new User(senderE2E, split[0], split[1]));
-            });
-
+            parseMessageAndAddToUsersMessageList(asapMessages, asapHops);
         }
 
-        if (uri.toString().equals(URI_CALL_HEDWIG)) {
-            // fly to user IOT Call
-            Log.writeLog(this, "Got Call Hedwig Message");
-
-            //If message Reciever is a Hedwig then it goes to location and fly there
-            for (Iterator<byte[]> it = asapMessages.getMessages(); it.hasNext(); ) {
-                byte[] asapMessage = it.next();
-                try {
-                    InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(asapMessage, asapHops, this.sharkPKIComponent);
-                    byte[] content = inMemoHedwigMessage.getContent();
-                    String[] split = content.toString().split(":");
-                    if (split[0].equals(HedwigApp.OWNER)) {
-                        Log.writeLog(this, "flying to longitude: " + split[1] + " and latitude: " + split[2]);
-                    }
-                } catch (ASAPException asapException) {
-                    asapException.printStackTrace();
-                }
-            }
-
-        }
 
         if (uri.toString().equals(URI_SEND_DELIVERY_PACKAGE)) {
             //If message Reciever is a Hedwig then it checks user location and fly there
-            for (Iterator<byte[]> it = asapMessages.getMessages(); it.hasNext(); ) {
-                byte[] asapMessage = it.next();
-                try {
-                    InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(asapMessage, asapHops, this.sharkPKIComponent);
-                    if (inMemoHedwigMessage.couldBeDecrypted()) {
-                        // its end user send confirmation message in confirmation uri
-                        this.sendRecieverConfirmationAndDropPackage(senderE2E);
+            parseMessageAndAddToUsersMessageList(asapMessages, asapHops);
 
-                        byte[] content = inMemoHedwigMessage.getContent();
-                        List<String> strings = messages.get(senderE2E);
-                        if (strings != null && !strings.isEmpty()) {
-                            strings.add(content.toString());
-                            messages.put(senderE2E, strings);
-                        } else {
-                            messages.put(senderE2E, Collections.singletonList(content.toString()));
-                        }
-
-                    } else {
-                        // its intermediatiaries hedwigs or users for which message is not meant, ideally add exchange protocol in same uri
-                        this.sendHedwigMessage("Package Intermediary Hedwig has recieved Package".getBytes(StandardCharsets.UTF_8), uri, true, false);
-                    }
-                } catch (ASAPException | HedwigMessangerException e) {
-                    e.printStackTrace();
-                }
-            }
             // else if its a Android User then he tries to open if it opens then it send Confirmation message
             Log.writeLog(this, "Got Send delivery Message");
         }
 
         if (uri.toString().equals(URI_PACKAGE_RECIEVED_CONFIRMATION)) {
             //add GPS and User to Peerslist in App
+            parseMessageAndAddToUsersMessageList(asapMessages, asapHops);
             Log.writeLog(this, "Got GPS Message");
-            asapMessages.getMessages().forEachRemaining(message -> {
-                String senderIdOnlyWhenMessageDecrypted = message.toString();
-                if (HedwigApp.OWNER.startsWith(HEDWIG_PREFIX) && packageReciever.equals(senderIdOnlyWhenMessageDecrypted)) {
-                    Log.writeLog(this, "Dropping package");
-                }
-                if (HedwigApp.OWNER.equals(senderIdOnlyWhenMessageDecrypted)) {
-                    List<String> strings = messages.get(senderE2E);
-                    String messageToAdd = "Package Recieved Confirmation from Reciever: " + senderE2E;
-                    if (strings != null && !strings.isEmpty()) {
-                        strings.add(messageToAdd);
-                        messages.put(senderE2E, strings);
-                    }
-                    messages.put(senderE2E, Collections.singletonList(messageToAdd));
-
-                }
-            });
-
         }
         Log.writeLog(this, "MAKE URI LISTENER PUBLIC AGAIN. Thank you :)");
-
         this.notifyHedwigMessageReceivedListener(uri);
+    }
+
+    private void parseMessageAndAddToUsersMessageList(ASAPMessages asapMessages, List<ASAPHop> asapHops) throws IOException {
+        asapMessages.getMessages().forEachRemaining(message -> {
+            try {
+                InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(message, asapHops, this.sharkPKIComponent);
+                if(inMemoHedwigMessage.couldBeDecrypted()) {
+                    List<InMemoHedwigMessage> inMemoHedwigMessages = messagesByUser.get(inMemoHedwigMessage.getSender().toString());
+                    inMemoHedwigMessages.add(inMemoHedwigMessage);
+                    messagesByUser.put(inMemoHedwigMessage.getSender().toString(), inMemoHedwigMessages);
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ASAPException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -393,5 +321,16 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
     public void onlinePeersChanged(Set<CharSequence> set) {
         this.onlinePeers = set;
         this.allPeers.addAll(set);
+    }
+
+    @Override
+    public void credentialReceived(CredentialMessage credentialMessage) {
+        credentialMessages.put(credentialMessage.getSubjectName().toString(), credentialMessage);
+    }
+
+    public void hedwigAcceptAndSignCredentialMessage(CredentialMessage credentialMessage) throws ASAPSecurityException, IOException {
+        Log.writeLog(this, "going to issue a certificate");
+        this.sharkPKIComponent.acceptAndSignCredential(credentialMessage);
+        credentialMessages.remove(credentialMessage.getSubjectName().toString());
     }
 }

@@ -4,13 +4,21 @@ package net.sharksystem.hedwig;
 import net.sharksystem.SharkException;
 import net.sharksystem.SharkTestPeerFS;
 
+import net.sharksystem.asap.ASAPHop;
+import net.sharksystem.asap.ASAPMessageReceivedListener;
 import net.sharksystem.asap.ASAPMessages;
 import net.sharksystem.asap.ASAPStorage;
+import net.sharksystem.asap.pki.ASAPCertificate;
+import net.sharksystem.pki.CredentialMessage;
+import net.sharksystem.pki.SharkPKIComponent;
+import net.sharksystem.utils.Log;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.List;
+
+import static net.sharksystem.hedwig.AppConstants.*;
 
 public class HedwigPackageDeliveryTest extends HedwigTestHelper {
 
@@ -74,11 +82,6 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          ASAPMessages messagesHarry = harryMessengerImplASAPStorage.getChannel(URI).getMessages();
          Assert.assertEquals(3, messagesHarry.size());
 
-
-
-
-
-
          /*
          *herminoe sends credential msg to harry
          * harry receive msg and sign it
@@ -87,8 +90,27 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          *
          *Assert everybody has credential msg of each
           */
+         // add keys to peers
+         SharkPKIComponent harryPKI = (SharkPKIComponent) this.harryPeer.getComponent(SharkPKIComponent.class);
+         SharkPKIComponent herminoePKI = (SharkPKIComponent) this.herminoePeer.getComponent(SharkPKIComponent.class);
+         SharkPKIComponent hedwigPKI = (SharkPKIComponent) this.hedwigPeer.getComponent(SharkPKIComponent.class);
 
+         //create credential messages
+         CredentialMessage harryCredentialMessage = harryPKI.createCredentialMessage();
+         CredentialMessage herminoeCredentialMessage = herminoePKI.createCredentialMessage();
 
+         // Harry and Herminoe exchange and accept credential message and issue certificates
+         ASAPCertificate harryIssuedHerminoeCert = harryPKI.acceptAndSignCredential(herminoeCredentialMessage);
+         ASAPCertificate herminoeIssuedHarryCert = herminoePKI.acceptAndSignCredential(harryCredentialMessage);
+
+         // hedwig gets credential message from Harry and sign it
+
+         harryPKI.addCertificate(herminoeIssuedHarryCert);
+
+         herminoePKI.addCertificate(harryIssuedHerminoeCert);
+
+         Assert.assertEquals(1, harryPKI.getCertificatesByIssuer(herminoePeer.getPeerID()).size());
+         Assert.assertEquals(1, herminoePKI.getCertificatesByIssuer(harryPeer.getPeerID()).size());
 
          /*
          *harry sends encrypted signed msg to heminoe through hedwig
@@ -101,17 +123,35 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          * heminoe could see all intermeditories of the msg(e.g hedwig)
          *
           */
+         this.harryMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
+         this.hedwigMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
+         this.herminoeMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
 
+        harryMessenger.sendHedwigMessage("OFFER".getBytes(), URI_MAKE_OFFER, herminoePeer.getPeerID(), false, false );
 
+         this.runEncounter(this.harryPeer, this.hedwigPeer, true);
 
+         HedwigMessageList messages = hedwigMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
+         Assert.assertEquals(1, messages.size());
 
          /*
-         * Heminoe sends encrypted and signed confirmation msg to harry
+          * Hedwig sends message to herminoe
+          */
+         this.runEncounter(this.hedwigPeer, this.herminoePeer, true);
+
+         this.runEncounter(this.herminoePeer, this.hedwigPeer, true);
+
+         messages = herminoeMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
+         Assert.assertEquals(1, messages.size());
+         Assert.assertEquals(harryPeer.getPeerID(), messages.getHedwigMessage(0, true).getSender());
+         Assert.assertTrue(messages.getHedwigMessage(0, false).couldBeDecrypted());
+         Assert.assertTrue(messages.getHedwigMessage(0, false).verified());
+
+         /*
+          * Heminoe sends encrypted and signed confirmation msg to harry
          *
          * Assert harry receive the confirmation msg and could decrypt it.
           */
      }
-
-
 
 }

@@ -12,6 +12,8 @@ import net.sharksystem.pki.SharkPKIComponentFactory;
 
 import java.io.IOException;
 
+import static net.sharksystem.hedwig.AppConstants.CHANNEL_MAKE_OFFER;
+import static net.sharksystem.hedwig.AppConstants.URI_MAKE_OFFER;
 import static net.sharksystem.hedwig.HedwigTestConstants.*;
 
 public class HedwigTestHelper{

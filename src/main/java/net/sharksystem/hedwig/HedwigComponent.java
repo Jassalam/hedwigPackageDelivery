@@ -3,8 +3,6 @@ package net.sharksystem.hedwig;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.SharkUnknownBehaviourException;
-import net.sharksystem.asap.ASAPException;
-import net.sharksystem.asap.ASAPSecurityException;
 import net.sharksystem.pki.SharkPKIComponent;
 
 import java.io.IOException;
@@ -31,7 +29,7 @@ public interface HedwigComponent extends SharkComponent {
      */
     Set<User> users = new HashSet<>();
 
-    Hashtable<String, List<String>> messages = new Hashtable();
+    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
 
     /**
      * List of all Hedwigs
@@ -210,17 +208,6 @@ public interface HedwigComponent extends SharkComponent {
      * and store in ASAP storage
      */
 
-
-    /**
-     * net.sharksystem.hedwig.Hedwig registration
-     * on startup Peer type net.sharksystem.hedwig.Hedwig will send a message to all peers to inform his identity as net.sharksystem.hedwig.Hedwig
-     * this will add net.sharksystem.hedwig.Hedwig to Hedwigs list in app,
-     * this way we can select net.sharksystem.hedwig.Hedwig and give him commands later on.
-     * net.sharksystem.hedwig.Hedwig registration message will be received by HedwigRegistrationListener.
-     * Message listener will add hedwig to HedwigPeer list.
-     */
-    void sendMessageHedwigRegistrationIfOwnerAHedwig(CharSequence ownerId) throws IOException, HedwigMessangerException;
-
     /**
      * User plans to send some Package to another User
      * makes an Offer to send Package
@@ -239,13 +226,6 @@ public interface HedwigComponent extends SharkComponent {
      * of specific peer which will be shown in app
      */
     void sendUserLocation(String longitude, String latitude) throws IOException, HedwigMessangerException;
-
-    /**
-     * call net.sharksystem.hedwig.Hedwig
-     * when the user want to send a package he will call net.sharksystem.hedwig.Hedwig to his location,
-     * This call will be implemented with IOT.
-     */
-    void callHedwig(CharSequence hedwigID, String longitude, String latitude) throws IOException, HedwigMessangerException;
 
     /**
      * send hedwig with package to receiver location
