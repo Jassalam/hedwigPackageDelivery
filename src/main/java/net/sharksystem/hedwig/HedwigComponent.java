@@ -2,7 +2,6 @@ package net.sharksystem.hedwig;
 
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
-import net.sharksystem.SharkUnknownBehaviourException;
 import net.sharksystem.asap.ASAPException;
 import net.sharksystem.pki.SharkPKIComponent;
 
@@ -171,12 +170,10 @@ public interface HedwigComponent extends SharkComponent {
 
     void startBluetooth();
     /**
-     * !! should be done automatically now  !!
-     * connect Peers and exchange ,store Certificate
-     * connecting two Peers exchange certificate with basic information like Name, ID, and signature
-     * and store in ASAP storage
+     * connect Peers
      */
 
+    Set<CharSequence> getAllPeers();
     /**
      * User plans to send some Package to another User
      * makes an Offer to send Package
@@ -185,8 +182,15 @@ public interface HedwigComponent extends SharkComponent {
      * @param peerId  id of the user whom he is sending message
      * @param message a custom message from User
      */
-    void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException;
 
+
+    void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException;
+      /*
+      * accept the offer of Package delivery
+      * send credential message back to the sender
+       */
+
+    void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
     /**
      * location exchange of app users
      * GPS location of Sender and Receiver is exchanged and store with sender
@@ -194,6 +198,8 @@ public interface HedwigComponent extends SharkComponent {
      * A specific message listener will be implemented which update the location
      * of specific peer which will be shown in app
      */
+
+
     void sendUserLocation(String longitude, String latitude) throws IOException, HedwigMessangerException;
 
     /**
@@ -204,7 +210,6 @@ public interface HedwigComponent extends SharkComponent {
      */
     void sendPackageToUser(String message, CharSequence receiver) throws IOException, HedwigMessangerException;
 
-    Set<CharSequence> getAllPeers();
 
-    void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
+
 }

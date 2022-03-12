@@ -52,44 +52,8 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
 
          this.setUpScenario_0();
 
-         // Harry broadcast message in channel URI - not signed, not encrypted
-         harryMessenger.sendHedwigMessage(MESSAGE_BYTE, URI, false, false);
-
-         // Act run encounter
-         this.runEncounter(this.harryPeer, this.herminoePeer, true);
-         herminoeMessenger.sendHedwigMessage(MESSAGE_1_BYTE, URI,false,false);
-
-         this.runEncounter(this.herminoePeer, this.harryPeer, true);
-         harryMessenger.sendHedwigMessage(MESSAGE_2_BYTE, URI, this.herminoePeer.getPeerID(), false, false);
-         harryMessenger.sendHedwigMessage(MESSAGE_3_BYTE, URI, this.herminoePeer.getPeerID(), false, false);
-         this.runEncounter(this.harryPeer, this.herminoePeer, true);
-         herminoeMessenger.sendHedwigMessage(MESSAGE_4_BYTE, URI, this.harryPeer.getPeerID(), false, false);
-         this.runEncounter(this.herminoePeer, this.harryPeer, true);
-
-         // assert peers list has one user
-         ASAPStorage herminoeMessengerImplASAPStorage = herminoeMessengerImpl.getASAPStorage();
-         List<CharSequence> sender = herminoeMessengerImplASAPStorage.getSender();
-         Assert.assertEquals(sender.get(0), this.harryPeer.getPeerID());
-         ASAPStorage harryMessengerImplASAPStorage = harryMessengerImpl.getASAPStorage();
-         List<CharSequence> sender1 = harryMessengerImplASAPStorage.getSender();
-         Assert.assertEquals(sender1.get(0), this.herminoePeer.getPeerID());
-
-         ASAPMessages asapMessages = herminoeMessengerImplASAPStorage.getChannel(URI).getMessages();
-
-         Assert.assertEquals(2, asapMessages.size());
 
 
-         ASAPMessages messagesHarry = harryMessengerImplASAPStorage.getChannel(URI).getMessages();
-         Assert.assertEquals(3, messagesHarry.size());
-
-         /*
-         *herminoe sends credential msg to harry
-         * harry receive msg and sign it
-         * harry send his credential msg to herminoe
-         * herminoe sign it
-         *
-         *Assert everybody has credential msg of each
-          */
          // add keys to peers
          SharkPKIComponent harryPKI = (SharkPKIComponent) this.harryPeer.getComponent(SharkPKIComponent.class);
          SharkPKIComponent herminoePKI = (SharkPKIComponent) this.herminoePeer.getComponent(SharkPKIComponent.class);
@@ -103,14 +67,45 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          ASAPCertificate harryIssuedHerminoeCert = harryPKI.acceptAndSignCredential(herminoeCredentialMessage);
          ASAPCertificate herminoeIssuedHarryCert = herminoePKI.acceptAndSignCredential(harryCredentialMessage);
 
-         // hedwig gets credential message from Harry and sign it
+         // Harry broadcast message in channel URI - not signed, not encrypted
+         harryMessenger.sendHedwigMessage(MESSAGE_BYTE, URI, false, false);
 
-         harryPKI.addCertificate(herminoeIssuedHarryCert);
+         // Act run encounter
+         this.runEncounter(this.harryPeer, this.herminoePeer, true);
+         herminoeMessenger.sendHedwigMessage(MESSAGE_1_BYTE, URI,false,false);
 
-         herminoePKI.addCertificate(harryIssuedHerminoeCert);
+         this.runEncounter(this.herminoePeer, this.harryPeer, true);
+         harryMessenger.sendHedwigMessage(MESSAGE_2_BYTE, URI, this.herminoePeer.getPeerID(), false, false);
+         harryMessenger.sendHedwigMessage(MESSAGE_3_BYTE, URI_MAKE_OFFER, this.herminoePeer.getPeerID(), false, false);
+         this.runEncounter(this.harryPeer, this.herminoePeer, true);
 
-         Assert.assertEquals(1, harryPKI.getCertificatesByIssuer(herminoePeer.getPeerID()).size());
-         Assert.assertEquals(1, herminoePKI.getCertificatesByIssuer(harryPeer.getPeerID()).size());
+
+         // assert peers list has one user
+         ASAPStorage herminoeMessengerImplASAPStorage = herminoeMessengerImpl.getASAPStorage();
+         List<CharSequence> sender = herminoeMessengerImplASAPStorage.getSender();
+         Assert.assertEquals(sender.get(0), this.harryPeer.getPeerID());
+
+         ASAPStorage harryMessengerImplASAPStorage = harryMessengerImpl.getASAPStorage();
+         List<CharSequence> sender1 = harryMessengerImplASAPStorage.getSender();
+         Assert.assertEquals(sender1.get(0), this.herminoePeer.getPeerID());
+
+         /*
+         *herminoe sends credential msg to harry
+         * harry receive msg and sign it
+         * harry send his credential msg to herminoe
+         * herminoe sign it
+         *
+         *Assert everybody has credential msg of each
+         */
+
+         this.runEncounter(this.herminoePeer, this.harryPeer, false);
+         herminoeMessenger.acceptOfferFromPeer(this.harryPeer.getPeerID(), URI_MAKE_OFFER);
+         this.runEncounter(this.herminoePeer, this.harryPeer, false);
+
+         HedwigMessageList makeOfferHarryMessages = this.harryMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
+         Assert.assertEquals(2, makeOfferHarryMessages.size());
+         Assert.assertEquals(makeOfferHarryMessages.getHedwigMessage(0, true).getSender(), harryPeer.getPeerID());
+         Assert.assertEquals(makeOfferHarryMessages.getHedwigMessage(1, true).getSender(), herminoePeer.getPeerID());
 
          /*
          *harry sends encrypted signed msg to heminoe through hedwig
@@ -123,40 +118,16 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          * heminoe could see all intermeditories of the msg(e.g hedwig)
          *
           */
-         this.harryMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
-         this.hedwigMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
-         this.herminoeMessengerImpl.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER );
+         harryMessenger.sendPackageToUser(URI_SEND_DELIVERY_PACKAGE, this.herminoePeer.getPeerID());
+         runEncounter(this.hedwigPeer, this.herminoePeer, false);
 
-        harryMessenger.sendHedwigMessage("OFFER".getBytes(), URI_MAKE_OFFER, herminoePeer.getPeerID(), false, false );
-
-         this.runEncounter(this.harryPeer, this.hedwigPeer, true);
-
-         HedwigMessageList messages = hedwigMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
+         HedwigMessageList messages = herminoeMessengerImpl.getChannel(URI_SEND_DELIVERY_PACKAGE).getMessages();
          Assert.assertEquals(1, messages.size());
 
-         /*
-          * Hedwig sends message to herminoe
-          */
-         this.runEncounter(this.hedwigPeer, this.herminoePeer, true);
+         HedwigMessageList confrimationMessages = harryMessengerImpl.getChannel(URI_PACKAGE_RECIEVED_CONFIRMATION).getMessages();
+         Assert.assertEquals(1, confrimationMessages.size());
+         Assert.assertEquals(confrimationMessages.getHedwigMessage(0, true).getSender(), herminoePeer.getPeerID());
 
-         this.runEncounter(this.herminoePeer, this.hedwigPeer, true);
-         this.runEncounter(this.hedwigPeer, this.herminoePeer, true);
-
-
-         messages = hedwigMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
-         Assert.assertEquals(1, messages.size());
-
-         messages = herminoeMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
-         Assert.assertEquals(1, messages.size());
-         Assert.assertEquals(harryPeer.getPeerID(), messages.getHedwigMessage(0, true).getSender());
-         Assert.assertTrue(messages.getHedwigMessage(0, false).couldBeDecrypted());
-         Assert.assertTrue(messages.getHedwigMessage(0, false).verified());
-
-         /*
-          * Heminoe sends encrypted and signed confirmation msg to harry
-         *
-         * Assert harry receive the confirmation msg and could decrypt it.
-          */
      }
 
 }

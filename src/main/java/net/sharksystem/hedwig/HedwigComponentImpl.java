@@ -22,6 +22,7 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
     public Set<CharSequence> allPeers = new HashSet<>();
     public Map<String, CredentialMessage> credentialMessages = new HashMap<>();
     private ASAPPeer asapPeer;
+    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
     /*
      *Package Information filled only when its a Hedwig
      *
@@ -37,6 +38,7 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
     public void onStart(ASAPPeer asapPeer) throws SharkException {
         this.asapPeer = asapPeer;
         Log.writeLog(this, "MAKE URI LISTENER PUBLIC AGAIN. Thank you :)");
+
         this.asapPeer.addASAPMessageReceivedListener(
             HedwigComponent.APP_FORMAT,
             this);
@@ -300,11 +302,9 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
             try {
                 InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(message, asapHops, this.sharkPKIComponent);
                 if (inMemoHedwigMessage.couldBeDecrypted()) {
-                    List<InMemoHedwigMessage> inMemoHedwigMessages = messagesByUser.get(inMemoHedwigMessage.getSender().toString());
-                    inMemoHedwigMessages.add(inMemoHedwigMessage);
-                    messagesByUser.put(inMemoHedwigMessage.getSender().toString(), inMemoHedwigMessages);
-
+                    Log.writeLog(this, "message could be decrypted");
                     if (URI_SEND_DELIVERY_PACKAGE.equals(uri)) {
+                        Log.writeLog(this, HedwigApp.OWNER + " sending confirmation message to: " + inMemoHedwigMessage.getSender().toString());
                         this.sendHedwigMessage((HedwigApp.OWNER).getBytes(StandardCharsets.UTF_8), URI_PACKAGE_RECIEVED_CONFIRMATION, inMemoHedwigMessage.getSender().toString(), true, true);
                     }
 
