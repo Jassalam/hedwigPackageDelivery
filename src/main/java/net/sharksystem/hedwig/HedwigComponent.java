@@ -52,11 +52,11 @@ public interface HedwigComponent extends SharkComponent {
      * @param encrypt  message will be encrypted for recipient(s) yes / no. A message with multiple
      *                 receiver is sent a multiple copies, each encrypted with receiver' public key.
      * @throws HedwigMessangerException no all certificates available to encrypt. Empty receiver list but
-     *                                 encrypted flag set
+     *                                  encrypted flag set
      * @since 1.0
      */
     void sendHedwigMessage(byte[] content, CharSequence uri, Set<CharSequence> receiver,
-                          boolean sign, boolean encrypt) throws HedwigMessangerException, IOException;
+                           boolean sign, boolean encrypt) throws HedwigMessangerException, IOException;
 
     /**
      * Variant. Just a single receiver
@@ -65,7 +65,7 @@ public interface HedwigComponent extends SharkComponent {
      * @since 1.0
      */
     void sendHedwigMessage(byte[] content, CharSequence uri, CharSequence receiver,
-                          boolean sign, boolean encrypt) throws HedwigMessangerException, IOException;
+                           boolean sign, boolean encrypt) throws HedwigMessangerException, IOException;
 
     /**
      * Variant. No receiver specified - send to anybody
@@ -85,7 +85,7 @@ public interface HedwigComponent extends SharkComponent {
      * @throws HedwigMessangerException channel already exists
      * @since 1.1
      */
-  HedwigMessageClosedChannel createClosedChannel(CharSequence uri, CharSequence name)
+    HedwigMessageClosedChannel createClosedChannel(CharSequence uri, CharSequence name)
         throws IOException, HedwigMessangerException;
 
     /**
@@ -169,11 +169,13 @@ public interface HedwigComponent extends SharkComponent {
      */
 
     void startBluetooth();
+
     /**
      * connect Peers
      */
 
     Set<CharSequence> getAllPeers();
+
     /**
      * User plans to send some Package to another User
      * makes an Offer to send Package
@@ -185,12 +187,13 @@ public interface HedwigComponent extends SharkComponent {
 
 
     void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException;
-      /*
-      * accept the offer of Package delivery
-      * send credential message back to the sender
-       */
+    /*
+     * accept the offer of Package delivery
+     * send credential message back to the sender
+     */
 
     void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
+
     /**
      * location exchange of app users
      * GPS location of Sender and Receiver is exchanged and store with sender
@@ -209,7 +212,6 @@ public interface HedwigComponent extends SharkComponent {
      * SendPackageMessageListener in hedwig will receive and will fly to GPS location of Receiver.
      */
     void sendPackageToUser(String message, CharSequence receiver) throws IOException, HedwigMessangerException;
-
 
 
 }

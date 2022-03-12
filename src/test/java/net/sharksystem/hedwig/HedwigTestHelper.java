@@ -5,17 +5,15 @@ import net.sharksystem.SharkException;
 import net.sharksystem.SharkPeer;
 import net.sharksystem.SharkTestPeerFS;
 import net.sharksystem.asap.pki.ASAPCertificate;
-import net.sharksystem.hedwig.HedwigTestConstants.*;
 import net.sharksystem.pki.CredentialMessage;
 import net.sharksystem.pki.SharkPKIComponent;
 import net.sharksystem.pki.SharkPKIComponentFactory;
 
 import java.io.IOException;
 
-import static net.sharksystem.hedwig.AppConstants.*;
 import static net.sharksystem.hedwig.HedwigTestConstants.*;
 
-public class HedwigTestHelper{
+public class HedwigTestHelper {
     public static final String MESSAGE = "Hi";
     public static final byte[] MESSAGE_BYTE = MESSAGE.getBytes();
     public static final String MESSAGE_1 = "Hello";
@@ -36,7 +34,9 @@ public class HedwigTestHelper{
     public static int portNumber = 10000;
 
 
-    public static int getPortNumber() { return HedwigTestHelper.portNumber++;}
+    public static int getPortNumber() {
+        return HedwigTestHelper.portNumber++;
+    }
 
 
     public final String subRootFolder;
@@ -56,7 +56,7 @@ public class HedwigTestHelper{
     protected HedwigComponentImpl hedwigMessengerImpl;
     protected HedwigComponentImpl herminoeMessengerImpl;
 
-    public  final String testName;
+    public final String testName;
 
 
     public HedwigTestHelper(String testName) {
@@ -69,19 +69,19 @@ public class HedwigTestHelper{
         this.hedwigFolder = subRootFolder + HEDWIG_ID;
     }
 
-    public void setupHarryPeerOnly(){
-        System.out.println("Test number = " +testNumber);
+    public void setupHarryPeerOnly() {
+        System.out.println("Test number = " + testNumber);
         String harryFolderName = harryFolder + "_" + testNumber;
         SharkTestPeerFS.removeFolder(harryFolderName);
         this.harryPeer = new SharkTestPeerFS(HARRY_ID, harryFolderName);
     }
-
+    
     /*
      *Scenario 0;
      *Harry and Herminoe exchange msg to ask if she needs a package
      */
 
-    public void setUpScenario_0() throws SharkException, IOException, HedwigMessangerException {
+    public void setUpScenario_0() throws SharkException, IOException {
         System.out.println("Test number = " + testNumber);
         String harryFolderName = harryFolder + "_" + testNumber;
         SharkTestPeerFS.removeFolder(harryFolderName);
@@ -110,18 +110,18 @@ public class HedwigTestHelper{
         this.hedwigMessenger = (HedwigComponent) this.hedwigPeer.getComponent(HedwigComponent.class);
 
         this.harryMessengerImpl = (HedwigComponentImpl) this.harryMessenger;
-        this.herminoeMessengerImpl =(HedwigComponentImpl) this.herminoeMessenger;
+        this.herminoeMessengerImpl = (HedwigComponentImpl) this.herminoeMessenger;
         this.hedwigMessengerImpl = (HedwigComponentImpl) this.hedwigMessenger;
 
     }
 
 
     /*
-    *Scenario 1;
-    *Harry and Herminoe exchange msg and
+     *Scenario 1;
+     *Harry and Herminoe exchange msg and
      */
 
-    public void setUpScenario_1() throws SharkException, IOException, HedwigMessangerException {
+    public void setUpScenario_1() throws SharkException, IOException {
         System.out.println("Test number = " + testNumber);
         String harryFolderName = harryFolder + "_" + testNumber;
         SharkTestPeerFS.removeFolder(harryFolderName);
@@ -166,13 +166,13 @@ public class HedwigTestHelper{
         this.hedwigMessenger = (HedwigComponent) this.hedwigPeer.getComponent(HedwigComponent.class);
 
         this.harryMessengerImpl = (HedwigComponentImpl) this.harryMessenger;
-        this.herminoeMessengerImpl =(HedwigComponentImpl) this.herminoeMessenger;
+        this.herminoeMessengerImpl = (HedwigComponentImpl) this.herminoeMessenger;
         this.hedwigMessengerImpl = (HedwigComponentImpl) this.hedwigMessenger;
 
     }
 
     public static HedwigComponent setupComponent(SharkPeer sharkPeer)
-        throws SharkException{
+        throws SharkException {
 
         // component factory
         SharkPKIComponentFactory certificateComponentFactory = new SharkPKIComponentFactory();
@@ -187,9 +187,8 @@ public class HedwigTestHelper{
         sharkPeer.addComponent(messengerFactory, HedwigComponent.class);
 
         return (HedwigComponent)
-        sharkPeer.getComponent(HedwigComponent.class);
+            sharkPeer.getComponent(HedwigComponent.class);
     }
-
 
 
 }
