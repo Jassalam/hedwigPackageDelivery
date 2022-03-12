@@ -50,12 +50,11 @@ public class HedwigApp {
             System.out.println("Peer started");
 
             // Its a Channel for making Offer to a User to send him a package
-            hedwigComponent.createChannel(URI, CHANNEL_MAKE_OFFER);
+            hedwigComponent.createChannel(URI, "HEDWIG");
             // Its a Channel for making Offer to a User to send him a package
             hedwigComponent.createChannel(URI_MAKE_OFFER, CHANNEL_MAKE_OFFER);
-
-             // create channel to send Package to particular location as soon as Hedwig get it, it fly to that location.
             hedwigComponent.createChannel(URI_SEND_DELIVERY_PACKAGE, CHANNEL_NAME_SEND_DELIVERY_PACKAGE);
+            hedwigComponent.createChannel(URI_PACKAGE_RECIEVED_CONFIRMATION, CHANNEL_PACKAGE_RECIEVED_CONFIRMATION);
 
             Thread.sleep(360000);
 

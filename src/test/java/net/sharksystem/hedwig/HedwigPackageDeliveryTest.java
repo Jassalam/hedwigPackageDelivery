@@ -140,6 +140,11 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
          this.runEncounter(this.hedwigPeer, this.herminoePeer, true);
 
          this.runEncounter(this.herminoePeer, this.hedwigPeer, true);
+         this.runEncounter(this.hedwigPeer, this.herminoePeer, true);
+
+
+         messages = hedwigMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
+         Assert.assertEquals(1, messages.size());
 
          messages = herminoeMessengerImpl.getChannel(URI_MAKE_OFFER).getMessages();
          Assert.assertEquals(1, messages.size());

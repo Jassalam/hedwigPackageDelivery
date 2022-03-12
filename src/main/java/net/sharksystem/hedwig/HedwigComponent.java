@@ -3,6 +3,7 @@ package net.sharksystem.hedwig;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.SharkUnknownBehaviourException;
+import net.sharksystem.asap.ASAPException;
 import net.sharksystem.pki.SharkPKIComponent;
 
 import java.io.IOException;
@@ -37,7 +38,7 @@ public interface HedwigComponent extends SharkComponent {
     Set<String> hedwigs = new HashSet();
 
     /**
-     * Send a shark message. Recipients can be empty (null). This message is sent to anybody.
+     * Send a hedwig message. Recipients can be empty (null). This message is sent to anybody.
      * End-to-end security is supported. This message is encrypted for any recipient in a non-empty
      * recipient list if flag <i>encrypted</i> is set. Message to with an empty recipient list cannot be
      * encrypted. This message would throw an exception.
@@ -107,18 +108,6 @@ public interface HedwigComponent extends SharkComponent {
     void removeAllChannels() throws IOException;
 
     /**
-     * Set communication behaviour (stone, bronze, internet age) for a channel.
-     *
-     * @param uri       channel uri
-     * @param behaviour behaviour
-     * @throws SharkUnknownBehaviourException unknown communication behaviour
-     * @throws HedwigMessangerException        unknown channel uri
-     * @since 1.1
-     */
-    void setChannelBehaviour(CharSequence uri, String behaviour)
-        throws SharkUnknownBehaviourException, HedwigMessangerException;
-
-    /**
      * Produces an object reference to a messenger channel with specified uri - throws an exception otherwise
      *
      * @param uri
@@ -171,26 +160,6 @@ public interface HedwigComponent extends SharkComponent {
      */
     List<CharSequence> getChannelUris() throws IOException, HedwigMessangerException;
 
-    /**
-     * Get a collection of messages of a channel.
-     * @param uri
-     * @return
-     * @throws SharkMessengerException no such channel
-     * @throws IOException problems when reading
-     */
-//    Collection<SharkMessage> getSharkMessages(CharSequence uri) throws SharkMessengerException, IOException;
-
-    /**
-     * @param listener
-     * @since 1.0
-     */
-    void addHedwigMessagesReceivedListener(HedwigMessageReceivedListener listener);
-
-    /**
-     * @param listener
-     * @since 1.0
-     */
-    void removeHedwigMessagesReceivedListener(HedwigMessageReceivedListener listener);
 
     SharkPKIComponent getSharkPKI();
 
@@ -233,14 +202,9 @@ public interface HedwigComponent extends SharkComponent {
      * location of receiver,package weight and certificate to net.sharksystem.hedwig.Hedwig
      * SendPackageMessageListener in hedwig will receive and will fly to GPS location of Receiver.
      */
-    void sendPackageToUserLocation(String message, CharSequence receiver) throws IOException, HedwigMessangerException;
+    void sendPackageToUser(String message, CharSequence receiver) throws IOException, HedwigMessangerException;
 
-    /**
-     * Confirmation Message
-     * After receiving the package Receiver will send a confirmation message to sender
-     * by confirmationMessageListener which inculde the message and stop the thread there.
-     * when receiver decrypted the message
-     * successfully hedwig will drop the package with Receiver
-     */
-    void sendRecieverConfirmationAndDropPackage(String reciever) throws IOException, HedwigMessangerException;
+    Set<CharSequence> getAllPeers();
+
+    void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
 }
