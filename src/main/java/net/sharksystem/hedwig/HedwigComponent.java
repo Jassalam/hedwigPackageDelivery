@@ -3,11 +3,10 @@ package net.sharksystem.hedwig;
 import net.sharksystem.ASAPFormats;
 import net.sharksystem.SharkComponent;
 import net.sharksystem.asap.ASAPException;
+import net.sharksystem.asap.ASAPSecurityException;
 import net.sharksystem.pki.SharkPKIComponent;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 
@@ -18,23 +17,6 @@ public interface HedwigComponent extends SharkComponent {
     String APP_FORMAT = "application/x-hedwigTransport";
     String URI = "hedwig://transporter";
 
-    // behaviour flags
-    String HEDWIG_MESSENGER_STONE_AGE_MODE = "net.sharksystem.messenger_stone_age";
-    String HEDWIG_MESSENGER_BRONZE_AGE_MODE = "net.sharksystem.messenger_bronze_age";
-    String HEDWIG_MESSENGER_INTERNET_AGE_MODE = "net.sharksystem.messenger_internet_age";
-    String DEFAULT_AGE = HEDWIG_MESSENGER_BRONZE_AGE_MODE;
-
-    /**
-     * List of all users online and their data
-     */
-    Set<User> users = new HashSet<>();
-
-    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
-
-    /**
-     * List of all Hedwigs
-     */
-    Set<String> hedwigs = new HashSet();
 
     /**
      * Send a hedwig message. Recipients can be empty (null). This message is sent to anybody.
@@ -87,24 +69,6 @@ public interface HedwigComponent extends SharkComponent {
      */
     HedwigMessageClosedChannel createClosedChannel(CharSequence uri, CharSequence name)
         throws IOException, HedwigMessangerException;
-
-    /**
-     * Remove a new channel.
-     *
-     * @param uri Channel identifier
-     * @throws IOException
-     * @throws HedwigMessangerException unknown channel uri
-     * @since 1.1
-     */
-    void removeChannel(CharSequence uri) throws IOException, HedwigMessangerException;
-
-    /**
-     * Remove all channels - be careful.
-     *
-     * @throws IOException
-     * @since 1.1
-     */
-    void removeAllChannels() throws IOException;
 
     /**
      * Produces an object reference to a messenger channel with specified uri - throws an exception otherwise
@@ -171,10 +135,10 @@ public interface HedwigComponent extends SharkComponent {
     void startBluetooth();
 
     /**
-     * connect Peers
+     * all Peers whether online or offline.
      */
-
     Set<CharSequence> getAllPeers();
+
 
     /**
      * User plans to send some Package to another User
@@ -184,34 +148,29 @@ public interface HedwigComponent extends SharkComponent {
      * @param peerId  id of the user whom he is sending message
      * @param message a custom message from User
      */
-
-
     void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException;
+
     /*
      * accept the offer of Package delivery
      * send credential message back to the sender
      */
-
     void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
+    
+    /*
+     * Set of all Subjects where acceptance of Credential Messages is Pending.
+     */
+    Set<String> getAllPendingCredentialAcceptanceSubjects();
 
     /**
-     * location exchange of app users
-     * GPS location of Sender and Receiver is exchanged and store with sender
-     * on startup automatically message is send with location as soon as user start app.
-     * A specific message listener will be implemented which update the location
-     * of specific peer which will be shown in app
+     * Accept credential message from Subject
      */
-
-
-    void sendUserLocation(String longitude, String latitude) throws IOException, HedwigMessangerException;
+    void acceptCredentialMessageBySubject(String subject) throws ASAPSecurityException, IOException;
 
     /**
      * send hedwig with package to receiver location
-     * Sender provide package, package details which are encrypted and signed, and message for receiver
-     * location of receiver,package weight and certificate to net.sharksystem.hedwig.Hedwig
-     * SendPackageMessageListener in hedwig will receive and will fly to GPS location of Receiver.
+     * Sender provide message for receiver signed and encrypted
+     * Hedwigs in between sender and reciever could not decrypt message
+     * as soon as reciever recieves message and decrypt it he will send a confirmation message automatically
      */
     void sendPackageToUser(String message, CharSequence receiver) throws IOException, HedwigMessangerException;
-
-
 }

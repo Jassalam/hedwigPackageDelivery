@@ -1,6 +1,5 @@
 package net.sharksystem.hedwig;
 
-import net.sharksystem.SharkException;
 import net.sharksystem.SharkNotSupportedException;
 import net.sharksystem.asap.*;
 import net.sharksystem.pki.CredentialMessage;
@@ -18,31 +17,24 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
     ASAPMessageReceivedListener, ASAPEnvironmentChangesListener, SharkCredentialReceivedListener {
 
     private final SharkPKIComponent sharkPKIComponent;
-    public Set<CharSequence> onlinePeers = new HashSet<>();
+    private ASAPPeer asapPeer;
+
+    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
     public Set<CharSequence> allPeers = new HashSet<>();
     public Map<String, CredentialMessage> credentialMessages = new HashMap<>();
-    private ASAPPeer asapPeer;
-    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
-    /*
-     *Package Information filled only when its a Hedwig
-     *
-     */
-    private final String packageReciever = "";
 
     public HedwigComponentImpl(SharkPKIComponent sharkPKIComponent) {
         this.sharkPKIComponent = sharkPKIComponent;
     }
 
-
     @Override
-    public void onStart(ASAPPeer asapPeer) throws SharkException {
+    public void onStart(ASAPPeer asapPeer) {
         this.asapPeer = asapPeer;
         Log.writeLog(this, "MAKE URI LISTENER PUBLIC AGAIN. Thank you :)");
 
         this.asapPeer.addASAPMessageReceivedListener(
             HedwigComponent.APP_FORMAT,
             this);
-
     }
 
 
@@ -106,8 +98,7 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
 
 
     public HedwigMessageClosedChannel createClosedChannel(CharSequence uri, CharSequence name)
-        throws IOException, HedwigMessangerException {
-
+        throws HedwigMessangerException {
         this.checkComponentRunning();
         throw new SharkNotSupportedException("not yet implemented");
     }
@@ -172,19 +163,6 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         }
     }
 
-
-    @Override
-    public void removeChannel(CharSequence uri) throws IOException, HedwigMessangerException {
-        Log.writeLog(this, "removeChannel", "not yet implemented");
-        throw new SharkNotSupportedException("not yet implemented");
-    }
-
-    @Override
-    public void removeAllChannels() throws IOException {
-        Log.writeLog(this, "removeAllChannels", "not yet implemented");
-        throw new SharkNotSupportedException("not yet implemented");
-    }
-
     public int size() throws IOException, HedwigMessangerException {
         try {
             ASAPStorage asapStorage =
@@ -222,20 +200,13 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
 
     @Override
     public void startBluetooth() {
-        Log.writeLog(this, "Simulating Bluetooth connection started");
+        Log.writeLog(this, "Bluetooth connection started");
     }
-
 
     @Override
     public void makeOfferToSendSomePackageToPeer(String peerId, String message) throws HedwigMessangerException, IOException {
         Log.writeLog(this, "making an Offer to send some Package");
         this.sendHedwigMessage((peerId + ":" + message).getBytes(StandardCharsets.UTF_8), URI_MAKE_OFFER, Collections.singleton(peerId), false, false);
-    }
-
-    @Override
-    public void sendUserLocation(String longitude, String latitude) throws IOException, HedwigMessangerException {
-        Log.writeLog(this, "Sharing User Location");
-        this.sendHedwigMessage((longitude + ", " + latitude).getBytes(StandardCharsets.UTF_8), URI_USER_GPS, false, false);
     }
 
     @Override
@@ -291,33 +262,33 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
             uriFound = true;
         }
         if (!uriFound) {
-            parseMessageAndAddToUsersMessageList("NoUrI", asapMessages, asapHops);
+            parseMessageAndAddToUsersMessageList(CHANNEL_DEFAULT_NAME, asapMessages, asapHops);
         }
         Log.writeLog(this, "MAKE URI LISTENER PUBLIC AGAIN. Thank you :)");
         this.notifyHedwigMessageReceivedListener(uri);
     }
 
-    private void parseMessageAndAddToUsersMessageList(String uri, ASAPMessages asapMessages, List<ASAPHop> asapHops) throws IOException {
-        asapMessages.getMessages().forEachRemaining(message -> {
-            try {
-                InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(message, asapHops, this.sharkPKIComponent);
-                if (inMemoHedwigMessage.couldBeDecrypted()) {
-                    Log.writeLog(this, "message could be decrypted");
-                    if (URI_SEND_DELIVERY_PACKAGE.equals(uri)) {
-                        Log.writeLog(this, HedwigApp.OWNER + " sending confirmation message to: " + inMemoHedwigMessage.getSender().toString());
-                        this.sendHedwigMessage((HedwigApp.OWNER).getBytes(StandardCharsets.UTF_8), URI_PACKAGE_RECIEVED_CONFIRMATION, inMemoHedwigMessage.getSender().toString(), true, true);
+    private void parseMessageAndAddToUsersMessageList(String uri, ASAPMessages asapMessages, List<ASAPHop> asapHops) {
+        try {
+            asapMessages.getMessages().forEachRemaining(message -> {
+                try {
+                    InMemoHedwigMessage inMemoHedwigMessage = InMemoHedwigMessage.parseMessage(message, asapHops, this.sharkPKIComponent);
+                    if (inMemoHedwigMessage.couldBeDecrypted()) {
+                        Log.writeLog(this, "message could be decrypted");
+                        if (URI_SEND_DELIVERY_PACKAGE.equals(uri)) {
+                            Log.writeLog(this, HedwigApp.OWNER + " sending confirmation message to: " + inMemoHedwigMessage.getSender().toString());
+                            this.sendHedwigMessage((HedwigApp.OWNER).getBytes(StandardCharsets.UTF_8), URI_PACKAGE_RECIEVED_CONFIRMATION, inMemoHedwigMessage.getSender().toString(), true, true);
+                        }
+
                     }
 
+                } catch (IOException | HedwigMessangerException | ASAPException e) {
+                    e.printStackTrace();
                 }
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ASAPException e) {
-                e.printStackTrace();
-            } catch (HedwigMessangerException e) {
-                e.printStackTrace();
-            }
-        });
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -330,7 +301,6 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
 
     @Override
     public void onlinePeersChanged(Set<CharSequence> set) {
-        this.onlinePeers = set;
         this.allPeers.addAll(set);
     }
 
@@ -339,7 +309,18 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         credentialMessages.put(credentialMessage.getSubjectName().toString(), credentialMessage);
     }
 
-    public void hedwigAcceptAndSignCredentialMessage(CredentialMessage credentialMessage) throws ASAPSecurityException, IOException {
+    public Set<String> getAllPendingCredentialAcceptanceSubjects() {
+        return credentialMessages.keySet();
+    }
+
+    public void acceptCredentialMessageBySubject(String subjectName) throws ASAPSecurityException, IOException {
+        CredentialMessage credentialMessage = credentialMessages.get(subjectName);
+        if (credentialMessage != null) {
+            this.hedwigAcceptAndSignCredentialMessage(credentialMessage);
+        }
+    }
+
+    private void hedwigAcceptAndSignCredentialMessage(CredentialMessage credentialMessage) throws ASAPSecurityException, IOException {
         Log.writeLog(this, "going to issue a certificate");
         this.sharkPKIComponent.acceptAndSignCredential(credentialMessage);
         credentialMessages.remove(credentialMessage.getSubjectName().toString());
