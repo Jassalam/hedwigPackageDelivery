@@ -42,7 +42,7 @@ public class HedwigPackageDeliveryTest extends HedwigTestHelper {
     }
 
     @Test
-    public void whenSomeoneInRangeThenAddToList() throws SharkException, IOException, InterruptedException {
+    public void testHedwigComponentAllFunctionsInOne() throws SharkException, IOException, InterruptedException {
 
         this.setUpScenario_0();
 

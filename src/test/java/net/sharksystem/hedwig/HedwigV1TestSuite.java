@@ -7,8 +7,8 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
     HedwigAppTest.class,
-    HedwigPackageDeliveryTest.class,
-    HedwigMessageSerializationTests.class
+    HedwigMessageSerializationTests.class,
+    HedwigPackageDeliveryTest.class
 })
 public class HedwigV1TestSuite {
 }
