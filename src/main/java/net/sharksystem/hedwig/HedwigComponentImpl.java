@@ -18,7 +18,7 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
 
     private final SharkPKIComponent sharkPKIComponent;
     private ASAPPeer asapPeer;
-    
+
     public Set<CharSequence> allPeers = new HashSet<>();
     public Map<String, CredentialMessage> credentialMessages = new HashMap<>();
 
@@ -281,8 +281,8 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
                     if (inMemoHedwigMessage.couldBeDecrypted()) {
                         Log.writeLog(this, "message could be decrypted");
                         if (URI_SEND_DELIVERY_PACKAGE.equals(uri)) {
-                            Log.writeLog(this, HedwigApp.OWNER + " sending confirmation message to: " + inMemoHedwigMessage.getSender().toString());
-                            this.sendHedwigMessage((HedwigApp.OWNER).getBytes(StandardCharsets.UTF_8), URI_PACKAGE_RECIEVED_CONFIRMATION, inMemoHedwigMessage.getSender().toString(), true, true);
+                            Log.writeLog(this, " sending confirmation message to: " + inMemoHedwigMessage.getSender().toString());
+                            this.sendHedwigMessage(("PackageReceptionConfirmed").getBytes(StandardCharsets.UTF_8), URI_PACKAGE_RECIEVED_CONFIRMATION, inMemoHedwigMessage.getSender().toString(), true, true);
                         }
 
                     }
