@@ -155,7 +155,14 @@ public interface HedwigComponent extends SharkComponent {
      * send credential message back to the sender
      */
     void acceptOfferFromPeer(CharSequence peerId, String offerId) throws HedwigMessangerException, IOException, ASAPException;
-    
+
+    /*
+     * Decline the offer of Package delivery
+     * do not send credential message back to the sender
+     * remove his offer from list
+     */
+    void declineOfferFromPeer(CharSequence peerId);
+
     /*
      * Set of all Subjects where acceptance of Credential Messages is Pending.
      */
@@ -163,8 +170,16 @@ public interface HedwigComponent extends SharkComponent {
 
     /**
      * Accept credential message from Subject
+     * hedwig will Accept And Sign CredentialMessage
      */
     void acceptCredentialMessageBySubject(String subject) throws ASAPSecurityException, IOException;
+
+    /**
+     * Decline credential message from Subject
+     * remove credential message from list.
+     * do not accept and sign CredentialMessage from this Subject
+     */
+    void declineCredentialMessageBySubject(String subject);
 
     /**
      * send hedwig with package to receiver location

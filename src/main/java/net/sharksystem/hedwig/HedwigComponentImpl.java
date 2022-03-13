@@ -18,8 +18,7 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
 
     private final SharkPKIComponent sharkPKIComponent;
     private ASAPPeer asapPeer;
-
-    Hashtable<String, List<InMemoHedwigMessage>> messagesByUser = new Hashtable();
+    
     public Set<CharSequence> allPeers = new HashSet<>();
     public Map<String, CredentialMessage> credentialMessages = new HashMap<>();
 
@@ -224,6 +223,12 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         Log.writeLog(this, "sending credentialmessage and accepting offer: " + offerId + "from: " + peerId.toString());
         this.sharkPKIComponent.sendOnlineCredentialMessage();
         this.sendHedwigMessage(offerId.getBytes(StandardCharsets.UTF_8), URI_MAKE_OFFER, peerId, false, false);
+        this.credentialMessages.remove(peerId);
+    }
+
+    @Override
+    public void declineOfferFromPeer(CharSequence peerId) {
+        this.credentialMessages.remove(peerId);
     }
 
     /////////////////////////////////////////////////////////////////////////////////////////////
@@ -291,10 +296,6 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         }
     }
 
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //                       backdoor - remove it when finished implementing                   //
-    /////////////////////////////////////////////////////////////////////////////////////////////
-
     public ASAPStorage getASAPStorage() throws IOException, ASAPException {
         return this.asapPeer.getASAPStorage(APP_FORMAT);
     }
@@ -318,6 +319,11 @@ public class HedwigComponentImpl extends HedwigMessageReceivedListenerManager im
         if (credentialMessage != null) {
             this.hedwigAcceptAndSignCredentialMessage(credentialMessage);
         }
+    }
+
+    @Override
+    public void declineCredentialMessageBySubject(String subject) {
+        credentialMessages.remove(subject);
     }
 
     private void hedwigAcceptAndSignCredentialMessage(CredentialMessage credentialMessage) throws ASAPSecurityException, IOException {
